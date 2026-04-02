@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>블로그 자동화 웹앱</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>교육 제안서 자동 블로그 포스팅</h1>
+  <div class="upload-section">
+    <input type="file" id="fileInput" accept=".pdf,.docx" />
+    <button id="uploadBtn">제안서 업로드</button>
+  </div>
+  <div class="result-section" id="result" hidden>
+    <h2>생성된 마크다운</h2>
+    <pre id="markdownOutput"></pre>
+    <h2>이미지 미리보기</h2>
+    <div id="imageGallery"></div>
+    <button id="copyBtn">마크다운 복사</button>
+    <button id="downloadBtn">이미지·마크다운 다운로드</button>
+    <button id="postBtn">네이버에 포스팅 (자동)</button>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
