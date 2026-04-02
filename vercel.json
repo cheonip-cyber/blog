@@ -1,0 +1,9 @@
+{
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/auth/google/callback", "destination": "/api/auth/google/callback" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}
