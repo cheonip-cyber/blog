@@ -52,7 +52,7 @@ app.post('/upload', upload.single('proposal'), async (req, res) => {
 // Endpoint: generate image via Google API (placeholder)
 app.post('/generate-image', async (req, res) => {
   const { prompt } = req.body;
-  const apiKey = process.env.GOOGLE_API_KEY;
+  const apiKey = process.env.API_KEY;
   // Placeholder: call external image generation service
   const response = await fetch('https://generativeai.googleapis.com/v1beta2/models/gemini-pro-vision:generateContent', {
     method: 'POST',
