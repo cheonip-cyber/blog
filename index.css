@@ -1,0 +1,43 @@
+@import url('https://cdn.jsdelivr.net/gh/moonspam/NanumSquare@2.0/nanumsquare.css');
+@import url('https://fonts.googleapis.com/css2?family=Maru+Buri:wght@400;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "NanumSquare", ui-sans-serif, system-ui, sans-serif;
+  --font-subtitle: "Maru Buri", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-50: #fdf4ff;
+  --color-brand-100: #fae8ff;
+  --color-brand-200: #f5d0fe;
+  --color-brand-300: #f0abfc;
+  --color-brand-400: #e879f9;
+  --color-brand-500: #d946ef;
+  --color-brand-600: #c026d3;
+  --color-brand-700: #a21caf;
+  --color-brand-800: #86198f;
+  --color-brand-900: #701a75;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased font-sans;
+  }
+}
+
+.markdown-body h1 { 
+  font-family: var(--font-subtitle);
+  @apply text-3xl font-bold mb-6 text-brand-800; 
+}
+.markdown-body h2 { 
+  font-family: var(--font-subtitle);
+  @apply text-2xl font-bold mt-8 mb-4 text-brand-700 border-b pb-2; 
+}
+.markdown-body h3 { 
+  font-family: var(--font-subtitle);
+  @apply text-xl font-bold mt-6 mb-3 text-brand-600; 
+}
+.markdown-body p { @apply mb-4 leading-relaxed; }
+.markdown-body ul { @apply list-disc pl-6 mb-4 space-y-2; }
+.markdown-body blockquote { @apply border-l-4 border-brand-300 pl-4 italic my-6 text-slate-600; }
+

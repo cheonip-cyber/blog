@@ -1,0 +1,5 @@
+{
+  "name": "SAM.SOTTA Reference Writer",
+  "description": "교육 제안서를 업로드하면 전문가의 시각으로 포스팅과 맞춤형 AI 이미지를 생성합니다.",
+  "requestFramePermissions": []
+}
