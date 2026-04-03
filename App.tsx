@@ -59,6 +59,7 @@ export default function App() {
   const [images, setImages] = useState<string[]>([]);
   const [isSavingToDocs, setIsSavingToDocs] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isProduction, setIsProduction] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -76,7 +77,10 @@ export default function App() {
   useEffect(() => {
     fetch('/api/auth/status')
       .then(r => r.json())
-      .then(({ isAuthenticated }) => setIsAuthenticated(isAuthenticated))
+      .then(({ isAuthenticated, isProduction: isProd }) => {
+        setIsAuthenticated(isAuthenticated);
+        setIsProduction(isProd !== false);
+      })
       .catch(() => setIsAuthenticated(false));
   }, []);
 
@@ -645,17 +649,23 @@ export default function App() {
                 <RefreshCw size={20} /> 다른 제안서 올리기
               </button>
 
-              <button
-                onClick={handleSaveToDocs}
-                disabled={isSavingToDocs}
-                className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSavingToDocs ? (
-                  <><Loader2 className="animate-spin" size={20} /> 저장 중...</>
-                ) : (
-                  <><Save size={20} /> Google Docs에 저장</>
-                )}
-              </button>
+              {isProduction ? (
+                <button
+                  onClick={handleSaveToDocs}
+                  disabled={isSavingToDocs}
+                  className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingToDocs ? (
+                    <><Loader2 className="animate-spin" size={20} /> 저장 중...</>
+                  ) : (
+                    <><Save size={20} /> Google Docs에 저장</>
+                  )}
+                </button>
+              ) : (
+                <div className="px-8 py-4 rounded-2xl bg-slate-200 text-slate-500 font-bold flex items-center justify-center gap-2 cursor-not-allowed" title="Google Docs 저장은 Production 환경에서만 가능합니다.">
+                  <Save size={20} /> Google Docs 저장 (Production 전용)
+                </div>
+              )}
 
               <a
                 href={GOOGLE_DOC_URL}
