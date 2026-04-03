@@ -106,12 +106,24 @@ async function getTextModels(): Promise<string[]> {
 
 async function getImageModels(): Promise<string[]> {
   const all = await getModels();
-  return all
+
+  const filtered = all
     .filter(m =>
       m.supportedGenerationMethods.includes('generateContent') &&
-      m.name.includes('image-generation')
+      // gemini-2.5-flash-image, gemini-2.0-flash-preview-image-generation 등 모두 포함
+      (m.name.includes('image-generation') || /\-image(\-|$)/.test(m.name))
     )
     .map(m => m.name);
+
+  // 품질 우선순위: 2.5-flash-image > 2.0-flash-image > image-generation 계열
+  const priority = (name: string): number => {
+    if (name.includes('2.5') && name.endsWith('-image')) return 0;
+    if (name.includes('2.5') && name.includes('image')) return 1;
+    if (name.includes('2.0') && name.endsWith('-image')) return 2;
+    return 3;
+  };
+
+  return filtered.sort((a, b) => priority(a) - priority(b));
 }
 
 // ─── 텍스트 생성 ─────────────────────────────────────────────────────────
