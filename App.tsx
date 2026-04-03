@@ -331,13 +331,12 @@ export default function App() {
             <h1 className="text-xl font-bold text-slate-900 font-subtitle">SAM.SOTTA</h1>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
-            <a href="https://www.samsotta.com/AI" target="_blank" rel="noopener noreferrer" className="hover:text-brand-600 transition-colors">서비스 소개</a>
             <a href={GOOGLE_DOC_URL} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1 hover:text-brand-600 transition-colors">
               <ExternalLink size={14} /> Google Docs
             </a>
-            <a href="tel:02-6949-3501" className="bg-brand-50 text-brand-600 px-4 py-2 rounded-lg hover:bg-brand-100 transition-colors">
-              문의하기
+            <a href="https://blog.naver.com/samsotta" target="_blank" rel="noopener noreferrer" className="bg-brand-50 text-brand-600 px-4 py-2 rounded-lg hover:bg-brand-100 transition-colors">
+              블로그 바로가기
             </a>
           </nav>
         </div>
@@ -680,6 +679,13 @@ export default function App() {
                   <Save size={20} /> Google Docs 저장 (Production 전용)
                 </div>
               )}
+
+              <button
+                onClick={() => copyToClipboard(`${blogData.title}\n\n${blogData.content}`)}
+                className="px-8 py-4 rounded-2xl border border-brand-200 text-brand-600 font-bold hover:bg-brand-50 transition-all flex items-center justify-center gap-2 active:scale-95"
+              >
+                <Copy size={20} /> 전체 복사
+              </button>
 
               <a
                 href={GOOGLE_DOC_URL}
