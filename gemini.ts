@@ -193,13 +193,14 @@ ${proposalText}
    📧 이메일: hrd@samsotta.com
    🏢 주식회사 SAM.SOTTA (샘소타)
 9. 키워드 태그: 해시태그 최소 10개. 마지막에 #샘소타 #SAMSOTTA #HRD #기업교육 포함.
-10. 이미지 프롬프트 6개 (영어, 텍스트 없는 순수 이미지):
-   - 이미지1 (썸네일A): Dark deep purple background, isometric 3D tech city with glowing neon circuit boards and floating geometric cubes, no text, cinematic lighting, ultra detailed
-   - 이미지2 (썸네일B): Pure white background, abstract fluid orange coral shapes scattered around edges, minimal negative space center, flat design illustration, no text
-   - 이미지3: Korean corporate conference room, 4-5 professionals in business attire seated at modern table, soft natural window light, photorealistic, no text
-   - 이미지4: Small round table discussion, 3 Korean professionals in smart casual, warm cafe-style lighting, engaged conversation, no text
-   - 이미지5: Clean white background, abstract circular flow diagram with soft blue and gray nodes connected by curved arrows, minimal flat illustration, no text
-   - 이미지6: Korean professional in white shirt writing notes at minimalist wooden desk, soft morning light from left window, focused atmosphere, no text
+10. 이미지 프롬프트 6개 (영어로 작성, 아래 규칙 반드시 준수):
+   [공통 규칙] NO photography, NO realistic photo, NO real people, graphic design only, no text, no letters
+   - 이미지1 (썸네일A): Flat graphic design poster, dark deep purple background, glowing neon purple and cyan geometric circuit board patterns, floating 3D isometric cubes and hexagons, professional corporate style, vector illustration, no text
+   - 이미지2 (썸네일B): Flat graphic design poster, pure white background, bold abstract orange and coral fluid blob shapes decorating the edges, clean minimal center space, modern corporate illustration style, no text
+   - 이미지3: Flat vector illustration, corporate training workshop scene, simplified stylized figures in business suits around a round table, navy blue and orange color palette, modern graphic design, no text, no realistic faces
+   - 이미지4: Flat vector illustration, team collaboration concept, abstract simplified human silhouettes with speech bubbles and connecting lines, vibrant blue and orange tones, clean modern infographic style, no text
+   - 이미지5: Flat vector infographic, circular growth process diagram with 4 connected arrow stages, soft blue grey and orange accent colors, white background, minimal clean corporate design, no text
+   - 이미지6: Flat vector illustration, professional development concept, stylized abstract figure at a desk with light rays and upward arrows symbolizing growth, purple and gold color scheme, modern minimal design, no text
 11. 보안: 예산/개인이름/연락처 → 강사님 등으로 대체.
 12. 썸네일 타이틀 "${thumbnailTitle}"은 이미지에 절대 넣지 말 것.
 
