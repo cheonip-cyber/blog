@@ -161,10 +161,14 @@ export default function App() {
       for (let i = 0; i < 2; i++) {
         if (content.imagePrompts[i]) {
           try {
-            const img = await generateImage(content.imagePrompts[i]);
-            generatedImages.push(img);
+            const result = await generateImage(content.imagePrompts[i]);
+            generatedImages.push(result.imageData);
+            if (result.isPlaceholder) {
+              showToast('이미지 생성 서비스가 일시적으로 불가합니다. 임시 이미지로 대체됩니다.', 'error');
+            }
           } catch {
             generatedImages.push(`https://picsum.photos/seed/samsotta-thumb-${i}/1024/1024?blur=2`);
+            showToast('이미지 생성에 실패했습니다. 임시 이미지로 대체됩니다.', 'error');
           }
           setImages([...generatedImages]);
         }
@@ -189,10 +193,14 @@ export default function App() {
       for (let i = images.length; i < 6; i++) {
         if (blogData.imagePrompts[i]) {
           try {
-            const img = await generateImage(blogData.imagePrompts[i]);
-            currentImages.push(img);
+            const result = await generateImage(blogData.imagePrompts[i]);
+            currentImages.push(result.imageData);
+            if (result.isPlaceholder) {
+              showToast('이미지 생성 서비스가 일시적으로 불가합니다. 임시 이미지로 대체됩니다.', 'error');
+            }
           } catch {
             currentImages.push(`https://picsum.photos/seed/samsotta-body-${i}/1024/1024`);
+            showToast('이미지 생성에 실패했습니다. 임시 이미지로 대체됩니다.', 'error');
           }
           setImages([...currentImages]);
         }

@@ -7,7 +7,12 @@ export interface BlogContent {
   imagePrompts: string[];
 }
 
-// ─── Gateway 호출 헬퍼 ─────────────────────────────────────────────────────
+export interface ImageResult {
+  imageData: string;
+  isPlaceholder: boolean;
+  message?: string;
+}
+
 async function callGateway(body: {
   task: string;
   input: string;
@@ -27,7 +32,6 @@ async function callGateway(body: {
   return res.json();
 }
 
-// ─── 블로그 콘텐츠 생성 ────────────────────────────────────────────────────
 export async function generateBlogContent(
   proposalText: string,
   authorName: string,
@@ -62,15 +66,15 @@ ${proposalText}
    📧 이메일: hrd@samsotta.com
    🏢 주식회사 SAM.SOTTA (샘소타)
 9. 키워드 태그: 해시태그 최소 10개. 마지막에 #샘소타 #SAMSOTTA #HRD #기업교육 포함.
-10. 이미지 프롬프트 6개 (영어, 텍스트 없는 이미지):
-   - 이미지1: Dark purple background, modern tech abstract, no text, neon purple accents
-   - 이미지2: Clean white background, soft orange geometric shapes, no text, minimalist
-   - 이미지3: Korean corporate training scene, office workers 35-50, documentary style
-   - 이미지4: Small group workshop, Korean professionals, natural lighting, collaborative
-   - 이미지5: Flat minimal process diagram, white background, no text, soft colors
-   - 이미지6: Korean professional reviewing notes, clean desk, soft daylight
+10. 이미지 프롬프트 6개 (영어, 절대 텍스트 없는 순수 배경/추상 이미지):
+   - 이미지1 (썸네일A): Dark deep purple background, isometric 3D tech city with glowing neon circuit boards and floating geometric cubes, no text, cinematic lighting, ultra detailed
+   - 이미지2 (썸네일B): Pure white background, abstract fluid orange coral shapes scattered around edges, minimal negative space center, flat design illustration, no text
+   - 이미지3: Korean corporate conference room, 4-5 professionals in business attire seated at modern table, soft natural window light, photorealistic, no text
+   - 이미지4: Small round table discussion, 3 Korean professionals in smart casual, warm cafe-style lighting, engaged conversation, no text
+   - 이미지5: Clean white background, abstract circular flow diagram with soft blue and gray nodes connected by curved arrows, minimal flat illustration, no text
+   - 이미지6: Korean professional in white shirt writing notes at minimalist wooden desk, soft morning light from left window, focused atmosphere, no text
 11. 보안: 예산/개인이름/연락처 → 강사님 등으로 대체.
-12. 썸네일 타이틀 "${thumbnailTitle}"은 이미지에 넣지 말 것.
+12. 썸네일 타이틀 "${thumbnailTitle}"은 이미지에 절대 넣지 말 것 (UI 오버레이로 처리).
 
 [출력 형식]
 반드시 순수 JSON만 반환 (마크다운 블록 없이):
@@ -92,9 +96,12 @@ ${proposalText}
   }
 }
 
-// ─── 이미지 생성 ──────────────────────────────────────────────────────────
-export async function generateImage(prompt: string): Promise<string> {
+// ✅ ImageResult 반환 - isPlaceholder로 App.tsx에서 토스트 알림 처리
+export async function generateImage(prompt: string): Promise<ImageResult> {
   const result = await callGateway({ task: 'image', input: prompt });
-  if (!result.imageData) throw new Error('이미지 데이터가 없습니다.');
-  return result.imageData;
+  return {
+    imageData: result.imageData,
+    isPlaceholder: result.isPlaceholder || false,
+    message: result.message
+  };
 }

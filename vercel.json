@@ -2,6 +2,11 @@
   "buildCommand": "vite build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
     { "source": "/auth/google/callback", "destination": "/api/auth/google/callback" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
