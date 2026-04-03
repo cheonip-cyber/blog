@@ -3,10 +3,27 @@
 // - API 키는 HTTP Referrer 제한으로 보호 (Google Cloud Console 설정)
 // - Google Docs 저장 등 서버 작업은 여전히 /api/* 경유
 
+// ─── 고정 이미지 프롬프트 ─────────────────────────────────────────────────
+// 텍스트 모델에게 프롬프트 생성을 맡기면 제안서 내용 기반으로
+// 실사 사진 스타일 프롬프트를 생성하는 문제 발생 → 코드에 고정
+export const FIXED_IMAGE_PROMPTS: string[] = [
+  // [0] 썸네일A: 다크 네이비 + 네온 회로기판
+  "Dark navy blue background, glowing cyan and blue neon circuit board geometric patterns, floating isometric 3D cubes and hexagons with particle effects, professional corporate graphic design, pure digital art, NO text, NO photography, NO real objects",
+  // [1] 썸네일B: 화이트 + 오렌지 플루이드
+  "Pure white background, vivid orange and coral abstract fluid blob shapes decorating all four edges, clean empty center space, modern flat illustration style, corporate design, NO text, NO photography, NO real objects",
+  // [2] 본문1: 딥 퍼플 + 네온 웨이브
+  "Deep purple to black gradient background, glowing purple and magenta neon wave lines flowing diagonally, 3D wireframe geometric shapes hexagons and diamonds scattered around, cinematic graphic design, NO text, NO photography, NO real objects",
+  // [3] 본문2: 웜 오렌지 + 유기적 도형
+  "Warm orange background, large abstract white and cream organic blob shapes overlapping in corners, bold geometric accent lines, minimalist modern poster design, NO text, NO photography, NO real objects",
+  // [4] 본문3: 제트 블랙 + 틸 네트워크
+  "Jet black background, bright teal and green glowing data visualization lines forming abstract network nodes and connections, futuristic tech graphic design, NO text, NO photography, NO real objects",
+  // [5] 본문4: 차콜 그레이 + 골드 다이아몬드
+  "Dark charcoal gray background, golden yellow and amber abstract geometric diamond shapes and angular patterns, luxury corporate graphic design style, NO text, NO photography, NO real objects",
+];
+
 export interface BlogContent {
   title: string;
   content: string;
-  imagePrompts: string[];
 }
 
 export interface ImageResult {
@@ -22,56 +39,44 @@ interface GeminiModel {
 }
 
 // ─── 브라우저용 TTL 캐시 ──────────────────────────────────────────────────
-// 브라우저는 탭이 유지되는 동안 메모리가 유지되므로 Serverless보다 캐시 효과가 좋음
 let modelCache: { models: GeminiModel[]; updatedAt: number } = {
   models: [],
   updatedAt: 0
 };
-const TTL = 10 * 60 * 1000; // 10분
+const TTL = 10 * 60 * 1000;
 
-// ─── API 키 (Referrer 제한으로 보호) ─────────────────────────────────────
+// ─── API 키 ───────────────────────────────────────────────────────────────
 function getApiKey(): string {
   const key = import.meta.env.VITE_GEMINI_API_KEY;
   if (!key) throw new Error('VITE_GEMINI_API_KEY가 설정되지 않았습니다.');
   return key;
 }
 
-// ─── 모델 목록 동적 조회 (TTL 캐싱 + stale fallback) ─────────────────────
+// ─── 모델 목록 동적 조회 ─────────────────────────────────────────────────
 async function getModels(): Promise<GeminiModel[]> {
   const now = Date.now();
-
   if (now - modelCache.updatedAt < TTL && modelCache.models.length > 0) {
     return modelCache.models;
   }
-
   try {
     const apiKey = getApiKey();
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
     );
     if (!res.ok) throw new Error(`모델 목록 조회 실패: ${res.status}`);
-
     const data = await res.json();
     const models: GeminiModel[] = (data.models || []).map((m: any) => ({
       name: m.name.replace('models/', ''),
       supportedGenerationMethods: m.supportedGenerationMethods || []
     }));
-
     modelCache = { models, updatedAt: now };
-    console.log(`✅ 모델 목록 갱신: ${models.length}개`);
     return models;
-
   } catch (err: any) {
-    // stale cache fallback
-    if (modelCache.models.length > 0) {
-      console.warn('⚠️ 모델 목록 조회 실패 → stale cache 사용');
-      return modelCache.models;
-    }
-    throw new Error(`모델 목록 조회 실패 (캐시 없음): ${err.message}`);
+    if (modelCache.models.length > 0) return modelCache.models;
+    throw new Error(`모델 목록 조회 실패: ${err.message}`);
   }
 }
 
-// ─── 텍스트 모델 점수 정렬 ────────────────────────────────────────────────
 function scoreTextModel(name: string): number {
   const versionMatch = name.match(/(\d+\.\d+)/);
   const version = versionMatch ? parseFloat(versionMatch[1]) : 0;
@@ -83,7 +88,6 @@ function scoreTextModel(name: string): number {
   return version * 10 + tier + penalty;
 }
 
-// ─── 텍스트 모델 필터링 ───────────────────────────────────────────────────
 async function getTextModels(): Promise<string[]> {
   const all = await getModels();
   const filtered = all
@@ -96,15 +100,10 @@ async function getTextModels(): Promise<string[]> {
     )
     .sort((a, b) => scoreTextModel(b.name) - scoreTextModel(a.name))
     .map(m => m.name);
-
   if (filtered.length === 0) throw new Error('사용 가능한 텍스트 모델 없음');
-  console.log(`📋 텍스트 모델 후보: ${filtered.slice(0, 3).join(', ')}`);
   return filtered;
 }
 
-// ─── 이미지 모델 필터링 ───────────────────────────────────────────────────
-// Google API는 이미지 생성 capability를 별도 필드로 제공하지 않음
-// "image-generation" 문자열이 현재 유일한 식별 방법
 async function getImageModels(): Promise<string[]> {
   const all = await getModels();
   return all
@@ -115,17 +114,12 @@ async function getImageModels(): Promise<string[]> {
     .map(m => m.name);
 }
 
-// ─── 텍스트 생성 (fallback 포함) ─────────────────────────────────────────
-async function generateTextWithFallback(
-  models: string[],
-  payload: object
-): Promise<string> {
+// ─── 텍스트 생성 ─────────────────────────────────────────────────────────
+async function generateTextWithFallback(models: string[], payload: object): Promise<string> {
   const apiKey = getApiKey();
   const errors: string[] = [];
-
   for (const model of models) {
     try {
-      console.log(`🔄 텍스트 시도: ${model}`);
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
@@ -134,20 +128,14 @@ async function generateTextWithFallback(
           body: JSON.stringify(payload)
         }
       );
-
       if (!res.ok) {
         const errText = await res.text();
-        console.warn(`❌ [fallback] ${model} (${res.status})`);
         errors.push(`${model}(${res.status})`);
         if ([400, 404, 429, 503].includes(res.status)) continue;
         throw new Error(errText);
       }
-
       const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      console.log(`✅ 텍스트 성공: ${model}`);
-      return text;
-
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     } catch (e: any) {
       errors.push(`${model}(err)`);
       continue;
@@ -156,7 +144,7 @@ async function generateTextWithFallback(
   throw new Error(`텍스트 생성 실패: ${errors.join(', ')}`);
 }
 
-// ─── 블로그 콘텐츠 생성 ───────────────────────────────────────────────────
+// ─── 블로그 콘텐츠 생성 (imagePrompts 제거됨) ────────────────────────────
 export async function generateBlogContent(
   proposalText: string,
   authorName: string,
@@ -165,6 +153,7 @@ export async function generateBlogContent(
 
   const models = await getTextModels();
 
+  // imagePrompts를 요청하지 않음 → 고정 프롬프트(FIXED_IMAGE_PROMPTS) 사용
   const prompt = `당신은 '샘소타 ${authorName}'입니다.
 다음 교육 제안서 텍스트를 분석하여 네이버 블로그 포스팅을 작성하세요.
 
@@ -193,25 +182,12 @@ ${proposalText}
    📧 이메일: hrd@samsotta.com
    🏢 주식회사 SAM.SOTTA (샘소타)
 9. 키워드 태그: 해시태그 최소 10개. 마지막에 #샘소타 #SAMSOTTA #HRD #기업교육 포함.
-10. 이미지 프롬프트 6개 (영어로 작성):
-   [필수 공통 규칙] Graphic design style ONLY. NO photography. NO realistic photos. NO real human faces. NO text. NO letters. NO words. Pure graphic/illustration/vector art only.
-   [배경 컬러 규칙] 6장 모두 다른 배경 컬러를 사용할 것. 아래 색상 팔레트를 활용: dark navy blue / deep purple / jet black / warm orange / dark teal / charcoal gray
-   [스타일 참고] 아래 두 가지 스타일을 번갈아 사용:
-     - 다크 스타일: 어두운 배경 + 네온/글로우 효과 + 기하학적 3D 오브젝트 (회로기판 패턴, 육각형, 큐브, 파티클)
-     - 라이트 스타일: 밝은 배경 + 선명한 컬러의 추상 유기적 도형들이 가장자리를 장식 (blob shapes, fluid forms)
-
-   - 이미지1 (썸네일A): Dark navy blue background, glowing cyan and blue neon circuit board geometric patterns, floating isometric 3D cubes and hexagons with particle effects, professional corporate graphic design, NO text, NO photography
-   - 이미지2 (썸네일B): Pure white background, vivid orange and coral abstract fluid blob shapes decorating all four edges, clean empty center space, modern flat illustration style, NO text, NO photography
-   - 이미지3: Deep purple to black gradient background, glowing purple and magenta neon wave lines flowing diagonally, 3D wireframe geometric shapes (hexagons, diamonds) scattered around, cinematic graphic design, NO text, NO photography
-   - 이미지4: Warm orange background, large abstract white and cream organic blob shapes overlapping in corners, bold geometric accent lines, minimalist modern poster design, NO text, NO photography
-   - 이미지5: Jet black background, bright teal and green glowing data visualization lines forming abstract network nodes and connections, futuristic tech graphic design, NO text, NO photography
-   - 이미지6: Dark charcoal gray background, golden yellow and amber abstract geometric diamond shapes and angular patterns, luxury corporate graphic design style, NO text, NO photography
-11. 보안: 예산/개인이름/연락처 → 강사님 등으로 대체.
-12. 썸네일 타이틀 "${thumbnailTitle}"은 이미지에 절대 넣지 말 것.
+10. 보안: 예산/개인이름/연락처 → 강사님 등으로 대체.
+11. 썸네일 타이틀 "${thumbnailTitle}"은 이미지에 절대 넣지 말 것.
 
 [출력 형식]
 반드시 순수 JSON만 반환 (마크다운 블록 없이):
-{"title":"블로그 제목","content":"마크다운 형식의 블로그 본문","imagePrompts":["prompt1","prompt2","prompt3","prompt4","prompt5","prompt6"]}`;
+{"title":"블로그 제목","content":"마크다운 형식의 블로그 본문"}`;
 
   const rawText = await generateTextWithFallback(models, {
     contents: [{ parts: [{ text: prompt }] }],
@@ -222,19 +198,17 @@ ${proposalText}
     const cleaned = rawText.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '');
     return JSON.parse(cleaned) as BlogContent;
   } catch {
-    console.error('JSON 파싱 실패:', rawText.slice(0, 200));
     throw new Error('블로그 콘텐츠 파싱 실패. 다시 시도해 주세요.');
   }
 }
 
-// ─── 이미지 생성 ──────────────────────────────────────────────────────────
+// ─── 이미지 생성 (고정 프롬프트 사용) ────────────────────────────────────
 export async function generateImage(prompt: string): Promise<ImageResult> {
   const apiKey = getApiKey();
   const models = await getImageModels();
 
   for (const model of models) {
     try {
-      console.log(`🎨 이미지 시도: ${model}`);
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
@@ -249,33 +223,22 @@ export async function generateImage(prompt: string): Promise<ImageResult> {
           })
         }
       );
-
-      if (!res.ok) {
-        console.warn(`❌ [fallback] 이미지 ${model} (${res.status})`);
-        continue;
-      }
-
+      if (!res.ok) continue;
       const data = await res.json();
       const parts = data.candidates?.[0]?.content?.parts || [];
-
       for (const part of parts) {
         if (part.inlineData?.data) {
-          console.log(`✅ 이미지 성공: ${model}`);
           return {
             imageData: `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`,
             isPlaceholder: false
           };
         }
       }
-
-    } catch (e: any) {
-      console.warn(`❌ [fallback] 이미지 ${model} 예외: ${e.message}`);
+    } catch {
       continue;
     }
   }
 
-  // 모든 이미지 모델 실패 → placeholder
-  console.warn('⚠️ 이미지 생성 실패 → placeholder 반환');
   const seed = Math.floor(Math.random() * 1000);
   return {
     imageData: `https://picsum.photos/seed/samsotta-${seed}/1024/1024?blur=2`,

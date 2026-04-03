@@ -21,7 +21,7 @@ import { toPng } from 'html-to-image';
 import ReactMarkdown from 'react-markdown';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { generateBlogContent, generateImage, type BlogContent } from './gemini';
+import { generateBlogContent, generateImage, FIXED_IMAGE_PROMPTS, type BlogContent } from './gemini';
 
 // PDF.js 워커 설정
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -159,9 +159,9 @@ export default function App() {
       // 썸네일 2장 순차 생성
       const generatedImages: string[] = [];
       for (let i = 0; i < 2; i++) {
-        if (content.imagePrompts[i]) {
+        if (FIXED_IMAGE_PROMPTS[i]) {
           try {
-            const result = await generateImage(content.imagePrompts[i]);
+            const result = await generateImage(FIXED_IMAGE_PROMPTS[i]);
             generatedImages.push(result.imageData);
             if (result.isPlaceholder) {
               showToast('이미지 생성 서비스가 일시적으로 불가합니다. 임시 이미지로 대체됩니다.', 'error');
@@ -191,9 +191,9 @@ export default function App() {
     try {
       const currentImages = [...images];
       for (let i = images.length; i < 6; i++) {
-        if (blogData.imagePrompts[i]) {
+        if (FIXED_IMAGE_PROMPTS[i]) {
           try {
-            const result = await generateImage(blogData.imagePrompts[i]);
+            const result = await generateImage(FIXED_IMAGE_PROMPTS[i]);
             currentImages.push(result.imageData);
             if (result.isPlaceholder) {
               showToast('이미지 생성 서비스가 일시적으로 불가합니다. 임시 이미지로 대체됩니다.', 'error');
