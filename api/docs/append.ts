@@ -1,7 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { google } from 'googleapis';
 
-const APP_URL = process.env.APP_URL || 'https://blog-six-bice-71.vercel.app';
+function getAppUrl(req: VercelRequest): string {
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  return `${proto}://${host}`;
+}
+
 const DOCUMENT_ID = process.env.GOOGLE_DOC_ID || '19d5e01j5IYakOKftv-7Y28T8oo0SStGKRwGej1QK6Wk';
 
 function markdownToPlainText(markdown: string): string {
@@ -25,15 +30,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!title || !content) return res.status(400).json({ error: '제목과 내용이 필요합니다.' });
 
   const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-  if (!refreshToken) {
-    return res.status(401).json({ error: '인증 정보가 없습니다.', needsAuth: true });
-  }
+  if (!refreshToken) return res.status(401).json({ error: '인증 정보가 없습니다.', needsAuth: true });
+
+  const appUrl = getAppUrl(req);
 
   try {
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      `${APP_URL}/auth/google/callback`
+      `${appUrl}/auth/google/callback`
     );
     oauth2Client.setCredentials({ refresh_token: refreshToken });
 
