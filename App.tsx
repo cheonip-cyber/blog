@@ -21,7 +21,7 @@ import { toPng } from 'html-to-image';
 import ReactMarkdown from 'react-markdown';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { generateBlogContent, generateImage, FIXED_IMAGE_PROMPTS, type BlogContent } from './gemini';
+import { generateBlogContent, generateImage, generateImagePrompts, type BlogContent } from './gemini';
 
 // PDF.js 워커 설정
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -56,6 +56,7 @@ export default function App() {
   const [isGeneratingRemaining, setIsGeneratingRemaining] = useState(false);
   const [blogData, setBlogData] = useState<BlogContent | null>(null);
   const [thumbnailTitle, setThumbnailTitle] = useState('');
+  const [imagePrompts, setImagePrompts] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [isSavingToDocs, setIsSavingToDocs] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -156,18 +157,22 @@ export default function App() {
       const content = await generateBlogContent(text, randomAuthor, thumbnailTitle);
       setBlogData(content);
 
+      // 블로그 생성마다 새 이미지 프롬프트 조합 생성
+      const currentPrompts = generateImagePrompts();
+      setImagePrompts(currentPrompts);
+
       // 썸네일 2장 순차 생성
       const generatedImages: string[] = [];
       for (let i = 0; i < 2; i++) {
-        if (FIXED_IMAGE_PROMPTS[i]) {
+        if (currentPrompts[i]) {
           try {
-            const result = await generateImage(FIXED_IMAGE_PROMPTS[i]);
+            const result = await generateImage(currentPrompts[i]);
             generatedImages.push(result.imageData);
             if (result.isPlaceholder) {
               showToast('이미지 생성 서비스가 일시적으로 불가합니다. 임시 이미지로 대체됩니다.', 'error');
             }
           } catch {
-            generatedImages.push(`https://picsum.photos/seed/samsotta-thumb-${i}/1024/1024?blur=2`);
+            generatedImages.push(`https://picsum.photos/seed/samsotta-${Date.now()}-${i}/1024/1024?blur=2`);
             showToast('이미지 생성에 실패했습니다. 임시 이미지로 대체됩니다.', 'error');
           }
           setImages([...generatedImages]);
@@ -191,9 +196,10 @@ export default function App() {
     try {
       const currentImages = [...images];
       for (let i = images.length; i < 6; i++) {
-        if (FIXED_IMAGE_PROMPTS[i]) {
+        if (imagePrompts[i] || i < 6) {
           try {
-            const result = await generateImage(FIXED_IMAGE_PROMPTS[i]);
+            const prompt = imagePrompts[i] || generateImagePrompts()[i];
+            const result = await generateImage(prompt);
             currentImages.push(result.imageData);
             if (result.isPlaceholder) {
               showToast('이미지 생성 서비스가 일시적으로 불가합니다. 임시 이미지로 대체됩니다.', 'error');

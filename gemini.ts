@@ -3,23 +3,90 @@
 // - API 키는 HTTP Referrer 제한으로 보호 (Google Cloud Console 설정)
 // - Google Docs 저장 등 서버 작업은 여전히 /api/* 경유
 
-// ─── 고정 이미지 프롬프트 ─────────────────────────────────────────────────
-// 텍스트 모델에게 프롬프트 생성을 맡기면 제안서 내용 기반으로
-// 실사 사진 스타일 프롬프트를 생성하는 문제 발생 → 코드에 고정
-export const FIXED_IMAGE_PROMPTS: string[] = [
-  // [0] 썸네일A: 다크 네이비 + 네온 회로기판
-  "Dark navy blue background, glowing cyan and blue neon circuit board geometric patterns, floating isometric 3D cubes and hexagons with particle effects, professional corporate graphic design, pure digital art, NO text, NO photography, NO real objects",
-  // [1] 썸네일B: 화이트 + 오렌지 플루이드
-  "Pure white background, vivid orange and coral abstract fluid blob shapes decorating all four edges, clean empty center space, modern flat illustration style, corporate design, NO text, NO photography, NO real objects",
-  // [2] 본문1: 딥 퍼플 + 네온 웨이브
-  "Deep purple to black gradient background, glowing purple and magenta neon wave lines flowing diagonally, 3D wireframe geometric shapes hexagons and diamonds scattered around, cinematic graphic design, NO text, NO photography, NO real objects",
-  // [3] 본문2: 웜 오렌지 + 유기적 도형
-  "Warm orange background, large abstract white and cream organic blob shapes overlapping in corners, bold geometric accent lines, minimalist modern poster design, NO text, NO photography, NO real objects",
-  // [4] 본문3: 제트 블랙 + 틸 네트워크
-  "Jet black background, bright teal and green glowing data visualization lines forming abstract network nodes and connections, futuristic tech graphic design, NO text, NO photography, NO real objects",
-  // [5] 본문4: 차콜 그레이 + 골드 다이아몬드
-  "Dark charcoal gray background, golden yellow and amber abstract geometric diamond shapes and angular patterns, luxury corporate graphic design style, NO text, NO photography, NO real objects",
+// ─── 이미지 프롬프트 풀 ──────────────────────────────────────────────────
+// gemini-2.5-flash-image 모델 기준으로 매번 다양한 스타일이 생성되도록
+// 배경 컬러 풀 + 패턴 풀을 랜덤 조합 → 6장 모두 다른 스타일 보장
+
+// 배경 컬러 풀 (다크 6 + 라이트 4)
+const BG_POOL = [
+  'deep dark purple (#1a0033)',
+  'dark navy blue (#0a0f2e)',
+  'pure jet black (#0d0d0d)',
+  'deep dark teal (#002d2d)',
+  'midnight dark indigo (#080c1a)',
+  'dark charcoal gray (#1c1c1e)',
+  'pure white',
+  'vibrant warm orange (#f96820)',
+  'bold coral red (#ff4040)',
+  'soft warm cream white (#faf5f0)',
 ];
+
+// 그래픽 패턴 풀
+const PATTERN_POOL = [
+  'glowing neon circuit board geometric patterns with floating isometric 3D cubes and hexagons, particle light effects',
+  'flowing neon wave lines with 3D wireframe hexagons and diamond shapes scattered, cinematic glow',
+  'abstract fluid organic blob shapes decorating all four edges with bold accent lines, clean center space',
+  'abstract geometric diamond and angular crystalline shapes with golden accent lines, luxury style',
+  'glowing data visualization network nodes connected by bright light lines, futuristic tech style',
+  'radiant particle orbs and circular glow rings with light streaks, ethereal energy style',
+  'layered abstract triangular geometric structures with gradient depth, modern architecture style',
+  'concentric circle rings with gradient glow and radiating energy lines from center',
+  'hexagonal honeycomb grid pattern with glowing neon edges and depth layers',
+  'abstract cosmic nebula color splash with vibrant gradients and star particle effects',
+];
+
+// 네온 컬러 악센트 풀 (다크 배경용)
+const ACCENT_POOL = [
+  'cyan and blue neon',
+  'purple and magenta neon',
+  'teal and green neon',
+  'golden yellow and amber',
+  'pink and violet neon',
+  'electric blue and white neon',
+];
+
+// 랜덤 셔플 (Fisher-Yates)
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// 이미지 6장 프롬프트 동적 생성
+// - 썸네일1(0): 다크 계열 고정 (샘플 기준)
+// - 썸네일2(1): 라이트 계열 고정 (샘플 기준)
+// - 본문 4장(2~5): 풀에서 랜덤 선택
+export function generateImagePrompts(): string[] {
+  const shuffledBg = shuffle(BG_POOL);
+  const shuffledPattern = shuffle(PATTERN_POOL);
+  const shuffledAccent = shuffle(ACCENT_POOL);
+
+  const darkBgs = BG_POOL.slice(0, 6);   // 다크 계열
+  const lightBgs = BG_POOL.slice(6);      // 라이트 계열
+  const randomDark = shuffle(darkBgs);
+  const randomLight = shuffle(lightBgs);
+
+  const base = 'Professional corporate graphic design style, pure digital illustration, NO photography, NO realistic photos, NO real people, NO text, NO letters';
+
+  return [
+    // [0] 썸네일A: 다크 배경 + 네온 패턴
+    `${randomDark[0]} background, ${shuffledAccent[0]} ${shuffledPattern[0]}, ${base}`,
+    // [1] 썸네일B: 라이트 배경 + 장식 패턴
+    `${randomLight[0]} background, ${shuffledPattern[1]}, ${base}`,
+    // [2~5] 본문 이미지: 완전 랜덤 조합
+    `${shuffledBg[0]} background, ${shuffledAccent[1]} ${shuffledPattern[2]}, ${base}`,
+    `${shuffledBg[1]} background, ${shuffledPattern[3]}, ${base}`,
+    `${shuffledBg[2]} background, ${shuffledAccent[2]} ${shuffledPattern[4]}, ${base}`,
+    `${shuffledBg[3]} background, ${shuffledPattern[5]}, ${base}`,
+  ];
+}
+
+// 하위 호환: 기존 FIXED_IMAGE_PROMPTS 사용처를 위해 유지
+// App.tsx에서 generateImagePrompts() 호출로 교체 필요
+export const FIXED_IMAGE_PROMPTS: string[] = generateImagePrompts();
 
 export interface BlogContent {
   title: string;
