@@ -21,7 +21,7 @@ import { toPng } from 'html-to-image';
 import ReactMarkdown from 'react-markdown';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { generateBlogContent, generateImage, generateImagePrompts, type BlogContent } from './gemini';
+import { generateBlogContent, generateImage, generateImagePrompts, generateBodyImagePrompts, type BlogContent } from './gemini';
 
 // PDF.js 워커 설정
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -157,8 +157,15 @@ export default function App() {
       const content = await generateBlogContent(text, randomAuthor, thumbnailTitle);
       setBlogData(content);
 
-      // 블로그 생성마다 새 이미지 프롬프트 조합 생성
-      const currentPrompts = generateImagePrompts();
+      // 썸네일용 추상 그래픽 프롬프트 (2장)
+      const thumbnailPrompts = generateImagePrompts();
+      // 본문용 내용 기반 프롬프트 (4장) - bodyImageTopics 활용
+      const defaultTopics = ['교육 현장 강의', '팀 협업 토론', '교육 프로세스 단계', '학습이론 모델'];
+      const topics = (content.bodyImageTopics && content.bodyImageTopics.length >= 4)
+        ? content.bodyImageTopics
+        : defaultTopics;
+      const bodyPrompts = generateBodyImagePrompts(topics);
+      const currentPrompts = [...thumbnailPrompts.slice(0, 2), ...bodyPrompts];
       setImagePrompts(currentPrompts);
 
       // 썸네일 2장 순차 생성
@@ -196,9 +203,9 @@ export default function App() {
     try {
       const currentImages = [...images];
       for (let i = images.length; i < 6; i++) {
-        if (imagePrompts[i] || i < 6) {
+        if (imagePrompts[i]) {
           try {
-            const prompt = imagePrompts[i] || generateImagePrompts()[i];
+            const prompt = imagePrompts[i];
             const result = await generateImage(prompt);
             currentImages.push(result.imageData);
             if (result.isPlaceholder) {

@@ -55,17 +55,15 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// 이미지 6장 프롬프트 동적 생성
-// - 썸네일1(0): 다크 계열 고정 (샘플 기준)
-// - 썸네일2(1): 라이트 계열 고정 (샘플 기준)
-// - 본문 4장(2~5): 풀에서 랜덤 선택
+// ─── 썸네일용 프롬프트 생성 (추상 그래픽 스타일) ────────────────────────
+// 매번 다른 배경 + 패턴 조합으로 생성
 export function generateImagePrompts(): string[] {
   const shuffledBg = shuffle(BG_POOL);
   const shuffledPattern = shuffle(PATTERN_POOL);
   const shuffledAccent = shuffle(ACCENT_POOL);
 
-  const darkBgs = BG_POOL.slice(0, 6);   // 다크 계열
-  const lightBgs = BG_POOL.slice(6);      // 라이트 계열
+  const darkBgs = BG_POOL.slice(0, 6);
+  const lightBgs = BG_POOL.slice(6);
   const randomDark = shuffle(darkBgs);
   const randomLight = shuffle(lightBgs);
 
@@ -76,21 +74,79 @@ export function generateImagePrompts(): string[] {
     `${randomDark[0]} background, ${shuffledAccent[0]} ${shuffledPattern[0]}, ${base}`,
     // [1] 썸네일B: 라이트 배경 + 장식 패턴
     `${randomLight[0]} background, ${shuffledPattern[1]}, ${base}`,
-    // [2~5] 본문 이미지: 완전 랜덤 조합
-    `${shuffledBg[0]} background, ${shuffledAccent[1]} ${shuffledPattern[2]}, ${base}`,
-    `${shuffledBg[1]} background, ${shuffledPattern[3]}, ${base}`,
-    `${shuffledBg[2]} background, ${shuffledAccent[2]} ${shuffledPattern[4]}, ${base}`,
-    `${shuffledBg[3]} background, ${shuffledPattern[5]}, ${base}`,
+    // [2~5] 본문 이미지 자리 (App.tsx에서 bodyImagePrompts로 대체됨)
+    '',
+    '',
+    '',
+    '',
   ];
 }
 
-// 하위 호환: 기존 FIXED_IMAGE_PROMPTS 사용처를 위해 유지
-// App.tsx에서 generateImagePrompts() 호출로 교체 필요
+// ─── 본문 이미지 프롬프트 생성 (내용 기반) ───────────────────────────────
+// 블로그 본문 분석으로 추출한 4가지 주제를 받아 각 유형에 맞는 프롬프트 생성
+const BODY_IMAGE_TYPES = {
+  // 교육 현장: 한국인 직장인 강의/워크숍 장면
+  training: (topic: string) =>
+    `Flat vector illustration, Korean office workers in business attire in a corporate training session, ` +
+    `presenter standing at front with screen showing "${topic}", engaged audience seated at tables, ` +
+    `modern meeting room setting, navy blue and orange color palette, professional HR training atmosphere, ` +
+    `stylized cartoon style, NO realistic faces, NO photography, NO text`,
+
+  // 팀 협업: 한국인 직장인 토론/그룹 활동
+  teamwork: (topic: string) =>
+    `Flat vector illustration, group of Korean professionals in smart casual attire collaborating around a round table, ` +
+    `discussing "${topic}", sticky notes and charts on wall behind them, warm modern office setting, ` +
+    `vibrant blue and coral color scheme, friendly corporate atmosphere, ` +
+    `stylized cartoon style, NO realistic faces, NO photography, NO text`,
+
+  // 프로세스 도식화: 단계별 플로우 다이어그램
+  process: (topic: string) =>
+    `Clean flat vector infographic diagram, horizontal step-by-step process flow showing "${topic}", ` +
+    `4 connected stages with icons and arrows, modern sans-serif labels replaced with icon symbols, ` +
+    `navy blue to orange gradient color progression, white background, ` +
+    `professional HR training process visualization, NO photography, NO realistic photos`,
+
+  // 이론/개념 인포그래픽: 커크패트릭, 70:20:10 등
+  theory: (topic: string) =>
+    `Modern flat vector infographic, visual representation of "${topic}" training theory or model, ` +
+    `circular or pyramid diagram with color-coded sections, abstract icons for each component, ` +
+    `deep navy blue background with cyan and orange accent colors, ` +
+    `professional educational framework visualization, NO photography, NO realistic photos, NO text`,
+};
+
+// 주제 키워드를 분석해 가장 적합한 이미지 타입 결정
+function selectBodyImageType(topic: string): keyof typeof BODY_IMAGE_TYPES {
+  const t = topic.toLowerCase();
+  // 이론 키워드
+  if (/커크패트릭|kirkpatrick|70.20.10|콜브|kolb|블룸|bloom|학습이론|교육이론|모델|model|framework/.test(t)) {
+    return 'theory';
+  }
+  // 프로세스/단계 키워드
+  if (/프로세스|과정|단계|플로우|flow|절차|사이클|cycle|체계|구조|시스템/.test(t)) {
+    return 'process';
+  }
+  // 팀/협업 키워드
+  if (/팀|협업|토론|소통|커뮤니케이션|그룹|discussion|team|collaboration|워크숍|실습/.test(t)) {
+    return 'teamwork';
+  }
+  // 기본: 교육 현장
+  return 'training';
+}
+
+export function generateBodyImagePrompts(topics: string[]): string[] {
+  return topics.slice(0, 4).map(topic => {
+    const type = selectBodyImageType(topic);
+    return BODY_IMAGE_TYPES[type](topic);
+  });
+}
+
+// 하위 호환
 export const FIXED_IMAGE_PROMPTS: string[] = generateImagePrompts();
 
 export interface BlogContent {
   title: string;
   content: string;
+  bodyImageTopics: string[]; // 본문 이미지 4장 주제 키워드 (텍스트 모델이 추출)
 }
 
 export interface ImageResult {
@@ -266,7 +322,17 @@ ${proposalText}
 
 [출력 형식]
 반드시 순수 JSON만 반환 (마크다운 블록 없이):
-{"title":"블로그 제목","content":"마크다운 형식의 블로그 본문"}`;
+{"title":"블로그 제목","content":"마크다운 형식의 블로그 본문","bodyImageTopics":["주제1","주제2","주제3","주제4"]}
+
+bodyImageTopics 작성 규칙:
+- 반드시 4개 작성 (한국어)
+- 각 주제는 본문에서 다루는 핵심 내용을 대표하는 10자 이내 키워드
+- 아래 유형 중 하나씩 포함되도록 구성:
+  * 교육 현장 장면 (예: "신입사원 강의", "리더십 워크숍")
+  * 팀 협업/토론 장면 (예: "팀 소통 활동", "그룹 토론 실습")
+  * 프로세스/단계 (예: "온보딩 프로세스", "교육 4단계 과정")
+  * 이론/모델 (예: "커크패트릭 4단계", "70:20:10 학습모델")
+- 제안서에 언급된 이론이 있으면 반드시 포함할 것`;
 
   const rawText = await generateTextWithFallback(models, {
     contents: [{ parts: [{ text: prompt }] }],
