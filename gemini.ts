@@ -193,14 +193,19 @@ ${proposalText}
    📧 이메일: hrd@samsotta.com
    🏢 주식회사 SAM.SOTTA (샘소타)
 9. 키워드 태그: 해시태그 최소 10개. 마지막에 #샘소타 #SAMSOTTA #HRD #기업교육 포함.
-10. 이미지 프롬프트 6개 (영어로 작성, 아래 규칙 반드시 준수):
-   [공통 규칙] NO photography, NO realistic photo, NO real people, graphic design only, no text, no letters
-   - 이미지1 (썸네일A): Flat graphic design poster, dark deep purple background, glowing neon purple and cyan geometric circuit board patterns, floating 3D isometric cubes and hexagons, professional corporate style, vector illustration, no text
-   - 이미지2 (썸네일B): Flat graphic design poster, pure white background, bold abstract orange and coral fluid blob shapes decorating the edges, clean minimal center space, modern corporate illustration style, no text
-   - 이미지3: Flat vector illustration, corporate training workshop scene, simplified stylized figures in business suits around a round table, navy blue and orange color palette, modern graphic design, no text, no realistic faces
-   - 이미지4: Flat vector illustration, team collaboration concept, abstract simplified human silhouettes with speech bubbles and connecting lines, vibrant blue and orange tones, clean modern infographic style, no text
-   - 이미지5: Flat vector infographic, circular growth process diagram with 4 connected arrow stages, soft blue grey and orange accent colors, white background, minimal clean corporate design, no text
-   - 이미지6: Flat vector illustration, professional development concept, stylized abstract figure at a desk with light rays and upward arrows symbolizing growth, purple and gold color scheme, modern minimal design, no text
+10. 이미지 프롬프트 6개 (영어로 작성):
+   [필수 공통 규칙] Graphic design style ONLY. NO photography. NO realistic photos. NO real human faces. NO text. NO letters. NO words. Pure graphic/illustration/vector art only.
+   [배경 컬러 규칙] 6장 모두 다른 배경 컬러를 사용할 것. 아래 색상 팔레트를 활용: dark navy blue / deep purple / jet black / warm orange / dark teal / charcoal gray
+   [스타일 참고] 아래 두 가지 스타일을 번갈아 사용:
+     - 다크 스타일: 어두운 배경 + 네온/글로우 효과 + 기하학적 3D 오브젝트 (회로기판 패턴, 육각형, 큐브, 파티클)
+     - 라이트 스타일: 밝은 배경 + 선명한 컬러의 추상 유기적 도형들이 가장자리를 장식 (blob shapes, fluid forms)
+
+   - 이미지1 (썸네일A): Dark navy blue background, glowing cyan and blue neon circuit board geometric patterns, floating isometric 3D cubes and hexagons with particle effects, professional corporate graphic design, NO text, NO photography
+   - 이미지2 (썸네일B): Pure white background, vivid orange and coral abstract fluid blob shapes decorating all four edges, clean empty center space, modern flat illustration style, NO text, NO photography
+   - 이미지3: Deep purple to black gradient background, glowing purple and magenta neon wave lines flowing diagonally, 3D wireframe geometric shapes (hexagons, diamonds) scattered around, cinematic graphic design, NO text, NO photography
+   - 이미지4: Warm orange background, large abstract white and cream organic blob shapes overlapping in corners, bold geometric accent lines, minimalist modern poster design, NO text, NO photography
+   - 이미지5: Jet black background, bright teal and green glowing data visualization lines forming abstract network nodes and connections, futuristic tech graphic design, NO text, NO photography
+   - 이미지6: Dark charcoal gray background, golden yellow and amber abstract geometric diamond shapes and angular patterns, luxury corporate graphic design style, NO text, NO photography
 11. 보안: 예산/개인이름/연락처 → 강사님 등으로 대체.
 12. 썸네일 타이틀 "${thumbnailTitle}"은 이미지에 절대 넣지 말 것.
 
